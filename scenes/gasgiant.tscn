@@ -1,0 +1,22 @@
+[gd_scene load_steps=5 format=3 uid="uid://tr7gq1h623um"]
+
+[ext_resource type="Texture2D" uid="uid://ckndwagy8xry7" path="res://assets/textures/8k_jupiter.jpg" id="1_a7vy0"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_ryehq"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_g4oku"]
+render_priority = 1
+albedo_texture = ExtResource("1_a7vy0")
+emission_energy_multiplier = 1.1
+
+[sub_resource type="SphereMesh" id="SphereMesh_8a7cg"]
+material = SubResource("StandardMaterial3D_g4oku")
+
+[node name="GasGiant" type="StaticBody3D"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_ryehq")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CollisionShape3D"]
+mesh = SubResource("SphereMesh_8a7cg")
+skeleton = NodePath("../..")

@@ -1,0 +1,70 @@
+[gd_scene load_steps=16 format=3 uid="uid://dggshpfnxnjfp"]
+
+[ext_resource type="PackedScene" uid="uid://dlubem1gppvgk" path="res://scenes/ship.tscn" id="1_gixn1"]
+[ext_resource type="Texture2D" uid="uid://bbv1kt47cgvo5" path="res://assets/8k_stars.jpg" id="1_nwj6a"]
+[ext_resource type="Script" path="res://scenes/main.gd" id="1_psxly"]
+[ext_resource type="Script" path="res://scenes/asteroid_spawner.gd" id="2_l0y01"]
+[ext_resource type="PackedScene" uid="uid://idjd6ychqbsu" path="res://scenes/small_asteroid.tscn" id="3_3uock"]
+[ext_resource type="PackedScene" uid="uid://tr7gq1h623um" path="res://scenes/gasgiant.tscn" id="3_23qt3"]
+[ext_resource type="PackedScene" uid="uid://dn47yb47wv5ct" path="res://scenes/HUDLayer.tscn" id="3_xjtx2"]
+[ext_resource type="PackedScene" uid="uid://di0begpwn5ohb" path="res://scenes/medium_asteroid.tscn" id="4_5m07g"]
+[ext_resource type="PackedScene" uid="uid://h62ct1v4hbon" path="res://scenes/star.tscn" id="4_hma28"]
+[ext_resource type="PackedScene" uid="uid://cx0fd1j2jawkn" path="res://scenes/large_asteroid.tscn" id="5_dbsle"]
+[ext_resource type="PackedScene" uid="uid://dst6s40scjkpr" path="res://scenes/huge_asteroid.tscn" id="6_qwksg"]
+[ext_resource type="Script" path="res://scenes/environmental_particles.gd" id="9_mvksg"]
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_0lpx5"]
+panorama = ExtResource("1_nwj6a")
+
+[sub_resource type="Sky" id="Sky_rvnjq"]
+sky_material = SubResource("PanoramaSkyMaterial_0lpx5")
+
+[sub_resource type="Environment" id="Environment_a7usn"]
+background_mode = 2
+background_energy_multiplier = 2.0
+sky = SubResource("Sky_rvnjq")
+ambient_light_color = Color(0.0110876, 0.0110876, 0.0110876, 1)
+ambient_light_energy = 0.1
+volumetric_fog_density = 0.01
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_psxly")
+
+[node name="Ship" parent="." instance=ExtResource("1_gixn1")]
+
+[node name="HUDLayer" parent="." instance=ExtResource("3_xjtx2")]
+
+[node name="AsteroidSpawner" type="Node3D" parent="."]
+script = ExtResource("2_l0y01")
+small_asteroid_scene = ExtResource("3_3uock")
+medium_asteroid_scene = ExtResource("4_5m07g")
+large_asteroid_scene = ExtResource("5_dbsle")
+huge_asteroid_scene = ExtResource("6_qwksg")
+spawn_radius = 1500.0
+min_distance_from_player = 50.0
+asteroid_counts = {
+"huge": 5,
+"large": 10,
+"medium": 50,
+"small": 100
+}
+min_speed = 1.0
+max_speed = 5.0
+
+[node name="EnvironmentalParticles" type="Node3D" parent="."]
+script = ExtResource("9_mvksg")
+
+[node name="EnvironmentalParticles" type="GPUParticles3D" parent="EnvironmentalParticles"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_a7usn")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="WorldEnvironment"]
+transform = Transform3D(0.707107, -8.16595e-08, 0.707107, 0.0503102, 0.997466, -0.0503101, -0.705315, 0.0711493, 0.705315, 0, 0, 0)
+light_color = Color(0.832895, 0.888756, 0.999091, 1)
+
+[node name="GasGiant" parent="WorldEnvironment" instance=ExtResource("3_23qt3")]
+transform = Transform3D(1988.85, 209.005, -28.4443, -210.931, 1970.68, -268.198, 0, 269.702, 1981.73, -2000, 100, -2007.35)
+
+[node name="Star" parent="WorldEnvironment" instance=ExtResource("4_hma28")]
+transform = Transform3D(50, 0, 0, 0, 50, 0, 0, 0, 50, 2000, -100, 2000)

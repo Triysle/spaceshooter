@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dxo1osidtqpf2"]
+
+[ext_resource type="Script" path="res://scenes/space_dust.gd" id="1_yk6r6"]
+
+[node name="SpaceDust" type="Node3D"]
+script = ExtResource("1_yk6r6")

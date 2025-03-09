@@ -1,0 +1,13 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://uco3u68a45dg"]
+
+[ext_resource type="Texture2D" uid="uid://d11tlkoqswgef" path="res://assets/textures/8k_mercury.jpg" id="1_2hbid"]
+
+[resource]
+resource_name = "Mat1"
+render_priority = 1
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.632908, 0.632908, 0.632908, 1)
+albedo_texture = ExtResource("1_2hbid")
+metallic = 0.5
+emission = Color(1, 1, 1, 1)
+emission_energy_multiplier = 16.0

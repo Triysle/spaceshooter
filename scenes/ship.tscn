@@ -1,0 +1,51 @@
+[gd_scene load_steps=7 format=3 uid="uid://dlubem1gppvgk"]
+
+[ext_resource type="Script" path="res://scenes/ship.gd" id="1_saxmb"]
+[ext_resource type="ArrayMesh" uid="uid://bhrlo0gfmvxe1" path="res://assets/models/ships/craft_racer_Mesh craft_racer.res" id="2_2hfc6"]
+[ext_resource type="Script" path="res://scenes/SpeedCamera.gd" id="3_mcvf4"]
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_u4uti"]
+points = PackedVector3Array(-0.198083, 0.659108, -0.482286, 0.219886, 0.562701, 0.932284, 0.123347, 0.755581, 1.02888, -0.230248, 0.530514, 0.932284, 0.2, 0.540457, -0.415526, 0.219886, 0.723394, -0.289249, -0.230248, 0.723394, 0.353616, -0.230248, 0.530514, -0.482286, -0.230248, 0.723394, -0.289249, -0.0968484, 0.75, 0.991404, 0.123347, 0.530514, 1.02888, 0.219886, 0.626987, -0.482286, 0.219886, 0.723394, 0.353616, -0.101632, 0.755581, 0.835839, -0.0995796, 0.532909, 1.0128, -0.230248, 0.562701, 0.932284, 0.187721, 0.659108, -0.482286, 0.197574, 0.54167, 0.866956, 0.123347, 0.755581, 0.835839, -0.230248, 0.626987, -0.482286, -0.230248, 0.691251, 0.48216, 0.219886, 0.691251, 0.48216)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_8fkss"]
+points = PackedVector3Array(-0.247237, -5.55112e-17, -0.438127, 0.597656, 0.4, 0.511319, 0.421743, 0.499234, 0.515098, -0.230097, 0.0804344, 1.02888, -0.230097, 0.530514, -0.482286, 0.569786, -5.55112e-17, -0.105118, -0.6, 0.398102, 0.508153, -0.230097, 0.530514, 1.02888, -0.580148, 0, -0.105118, 0.423593, 0.1, 0.859372, 0.2, 0.506539, -0.415989, -0.580148, 0, 0.500315, 0.569786, 0, 0.500315, 0.45, 0.393774, 0.895467, 0.577202, 0.395157, -0.109998, 0.236875, 0, -0.438127, -0.581315, 0.393678, -0.105885, -0.441829, 0.397577, 0.9128, -0.404884, 0.5, 0.0305957, 0.2, 0.506539, 0.962579, 0.239972, 0.395143, -0.447228, 0.423095, 0.5, 0.0305957, -0.405349, 0.1, 0.859372, 0.19485, 0.1, 0.945278, -0.403622, 0.499234, 0.515098)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_xbj3g"]
+points = PackedVector3Array(0.187721, 0.337515, -1.02888, -0.198083, 0.626971, -0.482286, -0.230248, -0.0160132, -0.482286, 0.219886, -0.0160132, -0.482286, -0.230248, 0.176895, -1.02888, -0.133709, 0.466099, -0.964565, 0.219886, 0.144796, -0.996721, 0.219886, 0.594747, -0.546597, -0.0694227, -0.0160132, -0.643063, 0.155556, 0.562585, -0.739583, -0.230248, 0.594747, -0.514441, -0.230248, 0.305479, -1.02888, 0.219886, 0.594747, -0.482286, -0.198083, 0.626971, -0.546597, 0.155556, 0.466099, -0.93241, -0.230248, 0.144796, -0.996721, 0.219886, 0.305479, -1.02888, 0.187721, 0.626971, -0.546597, 0.0590609, -0.0160132, -0.643063, -0.165918, 0.562585, -0.739583, -0.230248, -0.0160132, -0.514441, 0.219886, -0.0160132, -0.514441, -0.198083, 0.337515, -1.02888, -0.230248, 0.594747, -0.482286, 0.187721, 0.594747, -0.643063, 0.219886, 0.337515, -0.996721, -0.230248, 0.498261, -0.707428, -0.165918, 0.434, -0.964565, 0.219886, 0.530423, -0.675219, -0.165918, 0.530423, -0.803734)
+
+[node name="Ship" type="CharacterBody3D" groups=["player"]]
+disable_mode = 2
+motion_mode = 1
+script = ExtResource("1_saxmb")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = ExtResource("2_2hfc6")
+
+[node name="CollisionShapeTop" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.999973, 0.00729542, 0, -0.00729542, 0.999973, 0, 0, 0)
+shape = SubResource("ConvexPolygonShape3D_u4uti")
+
+[node name="CollisionShapeHull" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.999973, 0.00729542, 0, -0.00729542, 0.999973, 0, 0, 0)
+shape = SubResource("ConvexPolygonShape3D_8fkss")
+
+[node name="CollisionShapeCockpit" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.999973, 0.00729542, 0, -0.00729542, 0.999973, 0, 0, 0)
+shape = SubResource("ConvexPolygonShape3D_xbj3g")
+
+[node name="Marker3D" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 4)
+script = ExtResource("3_mcvf4")
+
+[node name="SpotLight3D" type="SpotLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.943223)
+light_energy = 16.0
+light_size = 1.0
+spot_range = 4096.0
+spot_attenuation = 2.0
+spot_angle = 30.0
+
+[node name="MotionParticles" type="GPUParticles3D" parent="."]

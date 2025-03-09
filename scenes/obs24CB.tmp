@@ -1,0 +1,24 @@
+[gd_scene load_steps=6 format=3 uid="uid://idjd6ychqbsu"]
+
+[ext_resource type="Texture2D" uid="uid://d11tlkoqswgef" path="res://assets/8k_mercury.jpg" id="1_fhcya"]
+[ext_resource type="Script" path="res://scenes/obstacle.gd" id="1_qdolq"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ma2sl"]
+albedo_texture = ExtResource("1_fhcya")
+
+[sub_resource type="SphereMesh" id="SphereMesh_726ao"]
+material = SubResource("StandardMaterial3D_ma2sl")
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_jtl0p"]
+
+[node name="Asteroid" type="Node3D"]
+
+[node name="Obstacle" type="RigidBody3D" parent="."]
+gravity_scale = 0.0
+script = ExtResource("1_qdolq")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Obstacle"]
+mesh = SubResource("SphereMesh_726ao")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Obstacle"]
+shape = SubResource("SphereShape3D_jtl0p")
