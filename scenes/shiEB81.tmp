@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scenes/ship.gd" id="1_saxmb"]
 [ext_resource type="ArrayMesh" uid="uid://bhrlo0gfmvxe1" path="res://assets/models/ships/craft_racer_Mesh craft_racer.res" id="2_2hfc6"]
 [ext_resource type="Script" path="res://scenes/SpeedCamera.gd" id="3_mcvf4"]
-[ext_resource type="Script" path="res://scenes/crosshair.gd" id="4_femjb"]
+[ext_resource type="Script" path="res://scenes/movement_indicators.gd" id="4_femjb"]
 
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_u4uti"]
 points = PackedVector3Array(-0.198083, 0.659108, -0.482286, 0.219886, 0.562701, 0.932284, 0.123347, 0.755581, 1.02888, -0.230248, 0.530514, 0.932284, 0.2, 0.540457, -0.415526, 0.219886, 0.723394, -0.289249, -0.230248, 0.723394, 0.353616, -0.230248, 0.530514, -0.482286, -0.230248, 0.723394, -0.289249, -0.0968484, 0.75, 0.991404, 0.123347, 0.530514, 1.02888, 0.219886, 0.626987, -0.482286, 0.219886, 0.723394, 0.353616, -0.101632, 0.755581, 0.835839, -0.0995796, 0.532909, 1.0128, -0.230248, 0.562701, 0.932284, 0.187721, 0.659108, -0.482286, 0.197574, 0.54167, 0.866956, 0.123347, 0.755581, 0.835839, -0.230248, 0.626987, -0.482286, -0.230248, 0.691251, 0.48216, 0.219886, 0.691251, 0.48216)
@@ -37,8 +37,9 @@ shape = SubResource("ConvexPolygonShape3D_xbj3g")
 [node name="Marker3D" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2)
 
-[node name="Crosshair" type="Node3D" parent="."]
-script = ExtResource("4_femjb")
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 4)
+script = ExtResource("3_mcvf4")
 
 [node name="SpotLight3D" type="SpotLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.943223)
@@ -48,6 +49,7 @@ spot_range = 4096.0
 spot_attenuation = 2.0
 spot_angle = 30.0
 
-[node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, 3)
-script = ExtResource("3_mcvf4")
+[node name="MovementIndicators" type="Node3D" parent="."]
+script = ExtResource("4_femjb")
+min_speed_threshold = null
+max_effect_speed = null

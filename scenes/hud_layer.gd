@@ -8,9 +8,17 @@ extends CanvasLayer
 # Ship Reference
 var ship: Node3D = null
 
-# Update Timing
+# Update Timing - reduced frequency to save performance
 var update_interval: float = 0.1  # Update 10 times per second
 var update_timer: float = 0.0
+
+# State caching for performance
+var last_boost_state = false
+var last_dampers_state = false
+var last_mode_state = false
+var last_speed = 0.0
+var last_pitch = 0.0
+var last_yaw = 0.0
 
 func _ready():
 	# Initial setup of labels
@@ -32,44 +40,51 @@ func _process(delta):
 
 func set_ship(target_ship: Node3D):
 	ship = target_ship
-	
-	# Optional: Verify ship has expected properties
-	if not ship.has_method("get_velocity"):
-		push_warning("Ship does not have expected methods!")
+	print("HUD Ship Reference Set: ", ship)
 
 func update_hud_elements():
-	# Update status text
-	status_label.text = "BOOST: {boost} | DAMPERS: {dampers} | MODE: {mode}".format({
-		"boost": "ON" if ship.boost_active else "OFF",
-		"dampers": "ON" if ship.dampers_active else "OFF",
-		"mode": "COUPLED" if not ship.decoupled_mode else "DECOUPLED"
-	})
+	# Safety check for ship reference
+	if not ship:
+		print("Warning: No ship reference in HUD")
+		return
+	
+	# Get current status - check for changes to avoid unnecessary updates
+	var boost_state = ship.boost_active
+	var dampers_state = ship.dampers_active
+	var mode_state = ship.decoupled_mode
+	
+	# Only update the status label if something changed
+	if (boost_state != last_boost_state or 
+		dampers_state != last_dampers_state or 
+		mode_state != last_mode_state
+		):
+		
+		status_label.text = "BOOST: %s | DAMPERS: %s | MODE: %s" % [
+			"ON" if boost_state else "OFF",
+			"ON" if dampers_state else "OFF",
+			"DECOUPLED" if mode_state else "COUPLED",
+		]
+		
+		# Update cached states
+		last_boost_state = boost_state
+		last_dampers_state = dampers_state
+		last_mode_state = mode_state
 	
 	# Calculate speed
 	var current_speed = ship.velocity.length()
+	
+	# Only update speed if it changed significantly (threshold of 0.1)
+	if abs(current_speed - last_speed) > 0.1:
+		speed_label.text = "SPEED: %.1f m/s" % current_speed
+		last_speed = current_speed
 	
 	# Calculate orientation
 	var forward = -ship.global_transform.basis.z
 	var pitch = rad_to_deg(asin(clamp(forward.y, -1.0, 1.0)))
 	var yaw = rad_to_deg(atan2(forward.x, forward.z))
 	
-	# Update labels with precise formatting
-	speed_label.text = "SPEED: %.1f m/s" % current_speed
-	orientation_label.text = "PITCH: %.1f° | YAW: %.1f°" % [pitch, yaw]
-
-# Optional: Color coding for different states
-func get_speed_color(speed: float) -> Color:
-	var max_speed = ship.max_drift_speed if ship else 20.0
-	var speed_ratio = speed / max_speed
-	
-	if speed_ratio < 0.3:
-		return Color.GREEN
-	elif speed_ratio < 0.7:
-		return Color.YELLOW
-	else:
-		return Color.RED
-
-# Optional: Add warning or alert methods
-func show_warning(message: String, duration: float = 2.0):
-	# Temporary warning display logic
-	pass
+	# Only update orientation if pitch or yaw changed significantly (threshold of 0.5 degrees)
+	if abs(pitch - last_pitch) > 0.5 or abs(yaw - last_yaw) > 0.5:
+		orientation_label.text = "PITCH: %.1f° | YAW: %.1f°" % [pitch, yaw]
+		last_pitch = pitch
+		last_yaw = yaw
