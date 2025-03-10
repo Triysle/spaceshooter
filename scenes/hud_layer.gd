@@ -1,9 +1,10 @@
 extends CanvasLayer
 
 # UI Element References
-@onready var status_label = $VBoxContainer/StatusLabel
-@onready var speed_label = $VBoxContainer/SpeedLabel
-@onready var orientation_label = $VBoxContainer/OrientationLabel
+@onready var status_label = $Background/VBoxContainer/StatusLabel
+@onready var speed_label = $Background/VBoxContainer/SpeedLabel
+@onready var orientation_label = $Background/VBoxContainer/OrientationLabel
+@onready var energy_bar = $Background/VBoxContainer/EnergyBar
 
 # Ship Reference
 var ship: Node3D = null
@@ -19,12 +20,19 @@ var last_mode_state = false
 var last_speed = 0.0
 var last_pitch = 0.0
 var last_yaw = 0.0
+var last_energy = 0.0
 
 func _ready():
 	# Initial setup of labels
 	status_label.text = "SYSTEM ONLINE"
 	speed_label.text = "SPEED: 0 m/s"
 	orientation_label.text = "ORIENTATION: 0°, 0°"
+	
+	# Set up energy bar (if it exists)
+	if energy_bar:
+		energy_bar.min_value = 0
+		energy_bar.max_value = 100
+		energy_bar.value = 100
 
 func _process(delta):
 	# Reduce update frequency for performance
@@ -41,6 +49,10 @@ func _process(delta):
 func set_ship(target_ship: Node3D):
 	ship = target_ship
 	print("HUD Ship Reference Set: ", ship)
+	
+	# Connect to energy changed signal if available
+	if ship.has_signal("energy_changed"):
+		ship.connect("energy_changed", Callable(self, "_on_ship_energy_changed"))
 
 func update_hud_elements():
 	# Safety check for ship reference
@@ -88,3 +100,34 @@ func update_hud_elements():
 		orientation_label.text = "PITCH: %.1f° | YAW: %.1f°" % [pitch, yaw]
 		last_pitch = pitch
 		last_yaw = yaw
+	
+	# Update energy bar the standard way (as a fallback if signal not connected)
+	if energy_bar and ship.has_method("get_energy_percentage"):
+		var energy_percentage = ship.get_energy_percentage()
+		if abs(energy_percentage - last_energy) > 0.5:
+			energy_bar.value = energy_percentage
+			last_energy = energy_percentage
+			
+			# Color the bar based on energy level
+			if energy_percentage < 25:
+				energy_bar.modulate = Color(1.0, 0.3, 0.3)  # Red when low
+			elif energy_percentage < 50:
+				energy_bar.modulate = Color(1.0, 0.8, 0.3)  # Yellow/orange when medium
+			else:
+				energy_bar.modulate = Color(0.3, 1.0, 0.3)  # Green when high
+
+# Signal handler for ship energy changes
+# More efficient than polling every frame
+func _on_ship_energy_changed(current: float, maximum: float):
+	if energy_bar:
+		var energy_percentage = (current / maximum) * 100.0
+		energy_bar.value = energy_percentage
+		last_energy = energy_percentage
+		
+		# Color the bar based on energy level
+		if energy_percentage < 25:
+			energy_bar.modulate = Color(1.0, 0.3, 0.3)  # Red when low
+		elif energy_percentage < 50:
+			energy_bar.modulate = Color(1.0, 0.8, 0.3)  # Yellow/orange when medium
+		else:
+			energy_bar.modulate = Color(0.3, 1.0, 0.3)  # Green when high

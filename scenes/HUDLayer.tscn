@@ -1,25 +1,46 @@
-[gd_scene load_steps=2 format=3 uid="uid://dn47yb47wv5ct"]
+[gd_scene load_steps=3 format=3 uid="uid://dn47yb47wv5ct"]
 
 [ext_resource type="Script" path="res://scenes/hud_layer.gd" id="1_1gg8x"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dam7c"]
+bg_color = Color(0.313726, 1, 0.313726, 1)
 
 [node name="HUDLayer" type="CanvasLayer"]
 script = ExtResource("1_1gg8x")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
-offset_right = 40.0
-offset_bottom = 40.0
+[node name="Background" type="Panel" parent="."]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -159.0
+offset_right = -885.0
+grow_horizontal = 2
+grow_vertical = 0
 
-[node name="Background" type="Panel" parent="VBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="Background"]
+offset_right = 62.0
+offset_bottom = 147.0
+
+[node name="StatusLabel" type="Label" parent="Background/VBoxContainer"]
 layout_mode = 2
 
-[node name="StatusLabel" type="Label" parent="VBoxContainer"]
+[node name="DamperLabel" type="Label" parent="Background/VBoxContainer"]
 layout_mode = 2
 
-[node name="DamperLabel" type="Label" parent="VBoxContainer"]
+[node name="SpeedLabel" type="Label" parent="Background/VBoxContainer"]
 layout_mode = 2
 
-[node name="SpeedLabel" type="Label" parent="VBoxContainer"]
+[node name="OrientationLabel" type="Label" parent="Background/VBoxContainer"]
 layout_mode = 2
 
-[node name="OrientationLabel" type="Label" parent="VBoxContainer"]
+[node name="EnergyLabel" type="Label" parent="Background/VBoxContainer"]
 layout_mode = 2
+text = "BOOST ENERGY"
+
+[node name="EnergyBar" type="ProgressBar" parent="Background/VBoxContainer"]
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+theme_override_styles/fill = SubResource("StyleBoxFlat_dam7c")
+value = 100.0
+show_percentage = false

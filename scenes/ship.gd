@@ -13,6 +13,12 @@ extends CharacterBody3D
 @export var max_drift_speed: float = 50.0      # Consistent maximum velocity
 @export var inertia_factor: float = 0.002      # Natural velocity decay rate
 
+@export_group("Energy System")
+@export var max_energy: float = 100.0          # Maximum energy capacity
+@export var energy_regen_rate: float = 15.0    # Energy regeneration per second
+@export var boost_energy_cost: float = 25.0    # Energy consumption per second while boosting
+@export var min_boost_energy: float = 10.0     # Minimum energy required to activate boost
+
 # Movement State Tracking
 # Manages ship's movement and orientation
 var velocity_vector := Vector3.ZERO        # Actual movement vector
@@ -28,6 +34,11 @@ var mouse_captured := true                 # Is mouse look active?
 var boost_active := false                  # Is boost mode currently on?
 var dampers_active := true                 # Are inertial dampeners active?
 var decoupled_mode := false                # Is the ship in decoupled flight mode?
+var current_energy: float = max_energy     # Current energy level
+var energy_depleted: bool = false          # Flag for energy depletion
+
+# Energy status information
+signal energy_changed(current, maximum)    # Signal to notify UI of energy changes
 
 # Optimization Caches
 # Performance-related precalculations
@@ -41,15 +52,22 @@ func _ready():
 	# Start with zero velocity and base acceleration
 	velocity = Vector3.ZERO
 	current_acceleration = base_acceleration
+	current_energy = max_energy
 	
 	# Capture mouse input by default
 	capture_mouse()
+	
+	# Emit initial energy level
+	emit_signal("energy_changed", current_energy, max_energy)
 
 # Physics Update Cycle
 # Handles all physics-related updates each frame
 func _physics_process(delta):
 	# Process player inputs
 	process_inputs(delta)
+	
+	# Handle energy regeneration and consumption
+	handle_energy(delta)
 	
 	# Calculate and apply ship movement physics
 	handle_ship_physics(delta)
@@ -62,10 +80,17 @@ func _physics_process(delta):
 func process_inputs(_delta):
 	# Boost Mechanics
 	# Modify acceleration rate during boost
-	var new_boost_state = Input.is_action_pressed("boost")
-	if new_boost_state != boost_active:
-		boost_active = new_boost_state
-		current_acceleration = base_acceleration * (boost_acceleration_factor if boost_active else 1.0)
+	var boost_input_pressed = Input.is_action_pressed("boost")
+	
+	# Only allow boost if we have enough energy
+	if boost_input_pressed and current_energy >= min_boost_energy:
+		if !boost_active:
+			boost_active = true
+			current_acceleration = base_acceleration * boost_acceleration_factor
+	elif boost_active:
+		# Deactivate boost if released or energy depleted
+		boost_active = false
+		current_acceleration = base_acceleration
 	
 	# System Toggles
 	# Handle various ship system toggle inputs
@@ -85,6 +110,32 @@ func process_inputs(_delta):
 			capture_mouse()
 		else:
 			release_mouse()
+
+# Energy Management System
+# Handles energy regeneration and consumption
+func handle_energy(delta):
+	var previous_energy = current_energy
+	
+	# Consume energy while boosting
+	if boost_active:
+		current_energy = max(current_energy - boost_energy_cost * delta, 0.0)
+		
+		# Disable boost if energy depleted
+		if current_energy < min_boost_energy:
+			boost_active = false
+			energy_depleted = true
+			current_acceleration = base_acceleration
+	else:
+		# Regenerate energy when not boosting
+		current_energy = min(current_energy + energy_regen_rate * delta, max_energy)
+		
+		# Reset energy depleted flag when we have enough energy to boost again
+		if energy_depleted and current_energy >= min_boost_energy:
+			energy_depleted = false
+	
+	# Notify UI of energy changes (only if changed significantly to reduce overhead)
+	if abs(previous_energy - current_energy) > 0.01:
+		emit_signal("energy_changed", current_energy, max_energy)
 
 # Ship Physics Simulation
 # Advanced movement physics with nuanced damper behaviors
@@ -182,3 +233,8 @@ func capture_mouse():
 
 func release_mouse():
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+
+# Public API for energy system
+# Returns current energy percentage (0-100)
+func get_energy_percentage() -> float:
+	return (current_energy / max_energy) * 100.0
