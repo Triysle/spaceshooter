@@ -5,9 +5,13 @@ extends CanvasLayer
 @onready var speed_label = $Background/VBoxContainer/SpeedLabel
 @onready var orientation_label = $Background/VBoxContainer/OrientationLabel
 @onready var energy_bar = $Background/VBoxContainer/EnergyBar
+@onready var controls_label = $Background/VBoxContainer/ControlsLabel  # New label for control settings
 
 # Ship Reference
 var ship: Node3D = null
+
+# Aim indicator reference
+var aim_indicator = null
 
 # Update Timing - reduced frequency to save performance
 var update_interval: float = 0.1  # Update 10 times per second
@@ -21,18 +25,16 @@ var last_speed = 0.0
 var last_pitch = 0.0
 var last_yaw = 0.0
 var last_energy = 0.0
+var last_invert_y = false
+var last_invert_x = false
 
 func _ready():
 	# Initial setup of labels
 	status_label.text = "SYSTEM ONLINE"
 	speed_label.text = "SPEED: 0 m/s"
 	orientation_label.text = "ORIENTATION: 0°, 0°"
-	
-	# Set up energy bar (if it exists)
-	if energy_bar:
-		energy_bar.min_value = 0
-		energy_bar.max_value = 100
-		energy_bar.value = 100
+	controls_label.text = "CONTROLS: Standard"
+	energy_bar.value = 100
 
 func _process(delta):
 	# Reduce update frequency for performance
@@ -53,6 +55,12 @@ func set_ship(target_ship: Node3D):
 	# Connect to energy changed signal if available
 	if ship.has_signal("energy_changed"):
 		ship.connect("energy_changed", Callable(self, "_on_ship_energy_changed"))
+	
+	# Find the aim indicator in the ship's children
+	for child in ship.get_children():
+		if child.get_class() == "GimballedAimIndicator":
+			aim_indicator = child
+			break
 
 func update_hud_elements():
 	# Safety check for ship reference
@@ -115,6 +123,19 @@ func update_hud_elements():
 				energy_bar.modulate = Color(1.0, 0.8, 0.3)  # Yellow/orange when medium
 			else:
 				energy_bar.modulate = Color(0.3, 1.0, 0.3)  # Green when high
+	
+	# Update control settings display if aim indicator exists
+	if controls_label and aim_indicator:
+		var invert_y = aim_indicator.invert_y_axis
+		var invert_x = aim_indicator.invert_x_axis
+		
+		if invert_y != last_invert_y or invert_x != last_invert_x:
+			var y_status = "Inverted" if invert_y else "Standard"
+			var x_status = "Inverted" if invert_x else "Standard"
+			controls_label.text = "CONTROLS: Y: %s | X: %s" % [y_status, x_status]
+			
+			last_invert_y = invert_y
+			last_invert_x = invert_x
 
 # Signal handler for ship energy changes
 # More efficient than polling every frame

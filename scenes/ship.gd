@@ -9,6 +9,11 @@ extends CharacterBody3D
 @export var turn_smoothness: float = 10.0      # Rotation responsiveness
 @export var mouse_sensitivity: float = 0.3     # Precision of aiming controls
 
+# Gimbal aiming system parameters
+@export_group("Gimbal System")
+@export var aim_follow_speed: float = 100.0      # Maximum rotation speed (degrees per second)
+@export var aim_acceleration: float = 5.0      # How quickly rotation builds up when moving cursor
+
 @export_group("Physics Settings")
 @export var max_drift_speed: float = 50.0      # Consistent maximum velocity
 @export var inertia_factor: float = 0.002      # Natural velocity decay rate
@@ -37,6 +42,9 @@ var decoupled_mode := false                # Is the ship in decoupled flight mod
 var current_energy: float = max_energy     # Current energy level
 var energy_depleted: bool = false          # Flag for energy depletion
 
+# Gimbal system references
+var aim_indicator: GimballedAimIndicator   # Reference to the aim indicator
+
 # Energy status information
 signal energy_changed(current, maximum)    # Signal to notify UI of energy changes
 
@@ -57,9 +65,21 @@ func _ready():
 	# Capture mouse input by default
 	capture_mouse()
 	
+	# Find aim indicator (assuming it's a direct child)
+	for child in get_children():
+		if child is GimballedAimIndicator:
+			aim_indicator = child
+			break
+	
+	# If no aim indicator was found, print a warning
+	if not aim_indicator:
+		push_warning("No GimballedAimIndicator found as a child of the ship!")
+	
 	# Emit initial energy level
 	emit_signal("energy_changed", current_energy, max_energy)
 
+# Physics Update Cycle
+# Handles all physics-related updates each frame
 # Physics Update Cycle
 # Handles all physics-related updates each frame
 func _physics_process(delta):
@@ -72,8 +92,22 @@ func _physics_process(delta):
 	# Calculate and apply ship movement physics
 	handle_ship_physics(delta)
 	
-	# Smoothly interpolate and apply ship rotation
-	apply_rotation(delta)
+	# Apply gimballed aim rotation if available
+	if aim_indicator:
+		# First, apply aim rotation (this was missing!)
+		apply_aim_rotation(delta)
+		
+		# Then add visual banking effect
+		var aim_offset = aim_indicator.get_aim_offset()
+		
+		# Create a gentle banking effect
+		var bank_angle = -aim_offset.x * 5.0  # Adjust multiplier to control intensity
+		
+		# Smoothly interpolate the visual bank to prevent jarring movements
+		$MeshInstance3D.rotation.z = lerp_angle($MeshInstance3D.rotation.z, deg_to_rad(bank_angle), 10.0 * delta)
+	else:
+		# Fall back to old rotation method if no aim indicator
+		apply_rotation(delta)
 
 # Input Processing
 # Manages all input-based ship control actions
@@ -108,8 +142,22 @@ func process_inputs(_delta):
 		mouse_captured = !mouse_captured
 		if mouse_captured:
 			capture_mouse()
+			# Reset aim indicator when recapturing mouse
+			if aim_indicator:
+				aim_indicator.reset_aim_position()
 		else:
 			release_mouse()
+	
+	# Control Inversion Toggles
+	# Toggle Y-axis inversion
+	if Input.is_action_just_pressed("toggle_invert_y") and aim_indicator:
+		aim_indicator.invert_y_axis = !aim_indicator.invert_y_axis
+		print("Y-Axis Inversion: " + ("ON" if aim_indicator.invert_y_axis else "OFF"))
+	
+	# Toggle X-axis inversion
+	if Input.is_action_just_pressed("toggle_invert_x") and aim_indicator:
+		aim_indicator.invert_x_axis = !aim_indicator.invert_x_axis
+		print("X-Axis Inversion: " + ("ON" if aim_indicator.invert_x_axis else "OFF"))
 
 # Energy Management System
 # Handles energy regeneration and consumption
@@ -199,8 +247,56 @@ func get_input_direction() -> Vector3:
 		# Decoupled Mode: Input independent of ship orientation
 		return input_dir
 
-# Rotation Application
-# Smoothly interpolates and applies ship rotation
+# Gimballed Aim Rotation - Controller-like approach
+# Uses the crosshair position to determine rotation rate, like a joystick
+func apply_aim_rotation(delta):
+	# Get the normalized aim offset from the indicator (-1 to 1 range)
+	var aim_offset = aim_indicator.get_aim_offset()
+	
+	# Calculate the offset length (distance from center)
+	var offset_length = aim_offset.length()
+	
+	# Apply dead zone - no rotation if within dead zone
+	if offset_length < aim_indicator.dead_zone_radius:
+		# Within dead zone, no rotation
+		pass
+	else:
+		# Calculate rotation rate based on distance from dead zone edge
+		# Remap from (deadzone-1) range to (0-1) range for smoother control
+		var normalized_distance = (offset_length - aim_indicator.dead_zone_radius) / (1.0 - aim_indicator.dead_zone_radius)
+		normalized_distance = clamp(normalized_distance, 0.0, 1.0)
+		
+		# Apply a curve to the normalized distance for better control
+		# Squaring gives finer control near the dead zone and faster rotation at the edges
+		normalized_distance = normalized_distance * normalized_distance
+		
+		# Calculate rotation speed (increases as crosshair moves further from center)
+		# Base the rotation speed on degrees per second for more intuitive tuning
+		var rotation_rate = normalized_distance * aim_follow_speed
+		
+		# Apply rotation based on direction
+		if offset_length > 0.01:  # Prevent division by zero
+			# Normalize the aim vector for direction
+			var normalized_aim = aim_offset / offset_length
+			
+			# Calculate rotation amounts - INVERT the direction to make ship turn TOWARD the crosshair
+			# We need to invert the direction because positive yaw/pitch values rotate in the opposite
+			# direction of what we want when trying to follow the crosshair
+			var yaw_change = -normalized_aim.x * rotation_rate * delta
+			var pitch_change = -normalized_aim.y * rotation_rate * delta
+			
+			# Apply rotation
+			yaw += yaw_change
+			pitch += pitch_change
+			
+			# Clamp pitch to prevent flipping
+			pitch = clamp(pitch, -80, 80)
+	
+	# Apply final rotation to ship
+	rotation_degrees = Vector3(pitch, yaw, 0)
+
+# Legacy Rotation Application
+# Used only if no aim indicator is available
 func apply_rotation(delta):
 	# Smoothly move current rotation towards target rotation
 	yaw = lerp(yaw, target_yaw, turn_smoothness * delta)
@@ -210,14 +306,14 @@ func apply_rotation(delta):
 	rotation_degrees = Vector3(pitch, yaw, 0)
 
 # Input Event Handling
-# Specifically manages mouse look input
+# Now only used for direct mouse look if no aim indicator is available
 func _input(event):
-	# Only process mouse rotation when mouse is captured
-	if mouse_captured and event is InputEventMouseMotion:
+	# Only process direct mouse rotation when mouse is captured AND no aim indicator exists
+	if mouse_captured and event is InputEventMouseMotion and not aim_indicator:
 		handle_mouse_rotation(event.relative)
 
 # Mouse Rotation Handling
-# Calculates rotation targets based on mouse movement
+# Legacy method for direct ship rotation
 func handle_mouse_rotation(delta_mouse: Vector2):
 	# Update rotation targets
 	target_yaw -= delta_mouse.x * mouse_sensitivity
